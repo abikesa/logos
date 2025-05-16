@@ -1,20 +1,23 @@
-# pip install Pillow
-
 from PIL import Image
 
-# === Step 1: Load your logo ===
-img = Image.open("./ukubona-dark.png").convert("RGBA")
-pixels = img.load()
-width, height = img.size
+def remove_background_with_tolerance(image_path, output_path, tolerance=10):
+    img = Image.open(image_path).convert("RGBA")
+    pixels = img.load()
+    width, height = img.size
 
-# === Step 2: Detect background color ===
-bg_color = pixels[0, 0]  # Sample top-left pixel (assumed background)
+    # Sample background from top-left pixel
+    bg_r, bg_g, bg_b, _ = pixels[0, 0]
 
-# === Step 3: Make background transparent ===
-for y in range(height):
-    for x in range(width):
-        if pixels[x, y][:3] == bg_color[:3]:  # Ignore alpha when comparing
-            pixels[x, y] = (0, 0, 0, 0)  # Fully transparent
+    def is_close(c1, c2, tol):
+        return all(abs(a - b) <= tol for a, b in zip(c1, c2))
 
-# === Step 4: Save new PNG ===
-img.save("./ukubona-dark-transparent.png")
+    for y in range(height):
+        for x in range(width):
+            r, g, b, a = pixels[x, y]
+            if is_close((r, g, b), (bg_r, bg_g, bg_b), tolerance):
+                pixels[x, y] = (0, 0, 0, 0)
+
+    img.save(output_path)
+
+# Run it
+remove_background_with_tolerance("ukubona-dark.png", "ukubona-dark-transparent.png", tolerance=16)
